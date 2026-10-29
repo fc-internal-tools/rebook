@@ -36,6 +36,10 @@
   .suggestion-btn:hover,.suggestion-btn.selected{background:#f9ab00;color:#fff;}
   .suggestion-btn:disabled{opacity:0.5;cursor:default;}
   .no-slots{font-size:13px;color:#c5221f;margin-top:8px;}
+  .force-row{border-top:1px solid #f9d77e;margin-top:14px;padding-top:12px;}
+  .force-btn{width:100%;padding:8px 14px;border-radius:6px;border:1px solid #c5221f;background:#fff;color:#c5221f;font-size:13px;cursor:pointer;}
+  .force-btn:hover{background:#c5221f;color:#fff;}
+  .force-btn:disabled{opacity:0.5;cursor:default;background:#fff;color:#c5221f;}
   .auth-badge{font-size:11px;color:#188038;text-align:right;min-height:14px;margin-bottom:4px;}
   .day-label{font-size:12px;color:#5f6368;margin-top:10px;margin-bottom:4px;font-weight:500;}
 </style>
@@ -51,6 +55,9 @@
     <div>Available times:</div>
     <div id="suggestions"></div>
     <div class="no-slots" id="no-slots" style="display:none"></div>
+    <div class="force-row">
+      <button class="force-btn" id="btn-force" onclick="forceBook()">Book anyway</button>
+    </div>
   </div>
 
   <div id="form-area">
@@ -124,6 +131,7 @@ let accessToken = null;
 let tokenClient = null;
 let afterAuth = null;
 let selfEmail = null;
+let conflictSlot = null;    // {target, end} of the clashing time, for "Book anyway"
 
 // ───────────────────────── Helpers ─────────────────────────
 const $ = function(id) { return document.getElementById(id); };
@@ -317,7 +325,7 @@ function handleBook() {
   const t = computeTarget();
   if (t.target < new Date()) { setStatus('That time is in the past.'); return; }
   setBusy(true);
-  $('conflict-box').style.display = 'none';
+  hideConflict();
   setStatus('Checking availability…');
   withAuth(function() { runBooking(false); });
 }
@@ -346,9 +354,31 @@ function showConflict(clashes, busy, t) {
   setStatus('');
   const names = clashes.map(function(c) { return c.summary; }).join(', ');
   $('conflict-msg').textContent = '⚠️ "' + names + '" is already booked at this time.';
+  conflictSlot = { target: t.target, end: t.end };
+  const fb = $('btn-force');
+  fb.disabled = false;
+  fb.textContent = 'Book anyway — ' + t.target.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' })
+    + ', ' + fmtTime(t.target) + ' (overlaps ' + names + ')';
   $('conflict-box').style.display = 'block';
   setBusy(false);
   renderSuggestions(getFreeSlots(busy, t.target, t.duration), t.duration);
+}
+
+function hideConflict() {
+  $('conflict-box').style.display = 'none';
+  conflictSlot = null;
+}
+
+// Books the originally requested time despite the clash (e.g. over lunch or a hold you'll skip).
+function forceBook() {
+  if (!conflictSlot) return;
+  lockChoices(true);
+  $('btn-force').classList.add('selected');
+  submitEvent(conflictSlot.target, conflictSlot.end);
+}
+
+function lockChoices(locked) {
+  document.querySelectorAll('.suggestion-btn, #btn-force').forEach(function(b) { b.disabled = locked; });
 }
 
 // Weekdays only, starting on the target day. Per day, picks the slots closest to the
@@ -407,7 +437,8 @@ function renderSuggestions(groups, duration) {
       btn.className = 'suggestion-btn';
       btn.textContent = fmtTime(slot);
       btn.onclick = function() {
-        document.querySelectorAll('.suggestion-btn').forEach(function(b) { b.classList.remove('selected'); b.disabled = true; });
+        document.querySelectorAll('.suggestion-btn').forEach(function(b) { b.classList.remove('selected'); });
+        lockChoices(true);
         btn.classList.add('selected');
         submitEvent(slot, new Date(slot.getTime() + duration * 60000));
       };
@@ -440,7 +471,7 @@ function submitEvent(start, end, retried) {
   api('/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all', { method: 'POST', body: event })
     .then(function(ev) { showSuccess(ev, guests); })
     .catch(function(e) {
-      document.querySelectorAll('.suggestion-btn').forEach(function(b) { b.disabled = false; });
+      lockChoices(false);
       handleError(e, function() { submitEvent(start, end, true); }, retried);
     });
 }
@@ -485,7 +516,10 @@ function init() {
   }
   if (PARAMS.attendees.length) $('attendee-display').textContent = '👤 ' + PARAMS.attendees.join(', ');
 
-  ['rb-weeks', 'rb-day', 'rb-time', 'rb-duration'].forEach(function(id) { $(id).addEventListener('change', updatePreview); });
+  // Changing the time/day invalidates a shown conflict (and its "Book anyway" target).
+  ['rb-weeks', 'rb-day', 'rb-time', 'rb-duration'].forEach(function(id) {
+    $(id).addEventListener('change', function() { hideConflict(); setStatus(''); updatePreview(); });
+  });
   updatePreview();
 
   withAuth(function() { setStatus(''); });
