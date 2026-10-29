@@ -8,68 +8,92 @@
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:Google Sans,Arial,sans-serif;background:#f8f9fa;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
-  .card{background:#fff;border-radius:12px;padding:32px;width:400px;box-shadow:0 4px 24px rgba(0,0,0,0.12);}
-  h2{font-size:20px;color:#202124;margin-bottom:24px;display:flex;align-items:center;gap:8px;}
-  label{display:block;font-size:13px;color:#5f6368;margin-bottom:16px;}
+  .card{background:#fff;border-radius:12px;padding:28px 32px;width:100%;max-width:400px;box-shadow:0 4px 24px rgba(0,0,0,0.12);}
+  h2{font-size:20px;color:#202124;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+  .source{font-size:12px;color:#5f6368;margin-bottom:18px;}
+  .source.warn{color:#c5221f;}
+  label{display:block;font-size:13px;color:#5f6368;margin-bottom:14px;}
   label span{display:block;margin-bottom:6px;}
-  input,select{width:100%;padding:9px 12px;border:1px solid #dadce0;border-radius:6px;font-size:14px;color:#202124;outline:none;transition:border 0.2s;}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  input,select{width:100%;padding:9px 12px;border:1px solid #dadce0;border-radius:6px;font-size:14px;color:#202124;outline:none;transition:border 0.2s;background:#fff;}
   input:focus,select:focus{border-color:#1a73e8;}
-  .attendees{font-size:12px;color:#5f6368;margin-top:4px;min-height:16px;}
-  .actions{display:flex;justify-content:flex-end;gap:12px;margin-top:24px;}
+  .preview{background:#e8f0fe;border-radius:6px;padding:10px 12px;font-size:14px;color:#174ea6;margin-bottom:10px;font-weight:500;}
+  .preview.warn{background:#fce8e6;color:#c5221f;}
+  .attendees{font-size:12px;color:#5f6368;margin-top:4px;min-height:16px;word-break:break-all;}
+  .actions{display:flex;justify-content:flex-end;gap:12px;margin-top:20px;}
   button{padding:9px 22px;border-radius:6px;font-size:14px;cursor:pointer;border:none;}
   .btn-cancel{background:#fff;border:1px solid #dadce0;color:#5f6368;}
   .btn-book{background:#1a73e8;color:#fff;}
   .btn-book:hover{background:#1557b0;}
   .btn-book:disabled{background:#ccc;cursor:not-allowed;}
-  .status{font-size:13px;color:#5f6368;margin-top:16px;min-height:20px;text-align:center;}
-  .success{color:#188038;font-size:15px;text-align:center;padding:16px 0;}
+  .status{font-size:13px;color:#5f6368;margin-top:14px;min-height:20px;text-align:center;}
+  .success{color:#188038;font-size:15px;text-align:center;padding:12px 0;line-height:1.6;}
+  .success .meta{color:#5f6368;font-size:13px;}
   .conflict-box{background:#fef7e0;border:1px solid #f9ab00;border-radius:6px;padding:14px;font-size:13px;color:#7a4f00;margin-bottom:16px;display:none;}
-  .conflict-box strong{display:block;margin-bottom:10px;}
-  .suggestions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+  .conflict-box strong{display:block;margin-bottom:8px;}
+  .suggestions{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
   .suggestion-btn{padding:6px 14px;border-radius:20px;border:1px solid #f9ab00;background:#fff8e1;color:#7a4f00;font-size:13px;cursor:pointer;transition:all 0.15s;}
-  .suggestion-btn:hover{background:#f9ab00;color:#fff;}
-  .suggestion-btn.selected{background:#f9ab00;color:#fff;}
+  .suggestion-btn:hover,.suggestion-btn.selected{background:#f9ab00;color:#fff;}
+  .suggestion-btn:disabled{opacity:0.5;cursor:default;}
   .no-slots{font-size:13px;color:#c5221f;margin-top:8px;}
-  .auth-badge{font-size:11px;color:#188038;text-align:right;margin-bottom:12px;}
+  .auth-badge{font-size:11px;color:#188038;text-align:right;min-height:14px;margin-bottom:4px;}
   .day-label{font-size:12px;color:#5f6368;margin-top:10px;margin-bottom:4px;font-weight:500;}
 </style>
 </head>
 <body>
 <div class="card">
-  <h2>📅 Rebook Appointment</h2>
   <div class="auth-badge" id="auth-badge"></div>
+  <h2>📅 Rebook Appointment</h2>
+  <div class="source" id="source-line"></div>
+
   <div class="conflict-box" id="conflict-box">
     <strong id="conflict-msg"></strong>
     <div>Available times:</div>
-    <div class="suggestions" id="suggestions"></div>
-    <div class="no-slots" id="no-slots" style="display:none">No free slots found in the next 2 days within your bookable hours.</div>
+    <div id="suggestions"></div>
+    <div class="no-slots" id="no-slots" style="display:none"></div>
   </div>
+
   <div id="form-area">
     <label><span>Event title</span>
       <input type="text" id="rb-title" placeholder="e.g. Coaching Call">
     </label>
-    <label><span>Weeks ahead</span>
-      <select id="rb-weeks">
-        <option value="1">1 week</option>
-        <option value="2">2 weeks</option>
-        <option value="3">3 weeks</option>
-        <option value="4" selected>4 weeks</option>
-        <option value="5">5 weeks</option>
-        <option value="6">6 weeks</option>
-      </select>
-    </label>
-    <label><span>Time</span>
-      <select id="rb-time"></select>
-    </label>
-    <label><span>Duration</span>
-      <select id="rb-duration">
-        <option value="20">20 minutes</option>
-        <option value="30" selected>30 minutes</option>
-        <option value="45">45 minutes</option>
-        <option value="60">1 hour</option>
-        <option value="90">1 hour 30 minutes</option>
-      </select>
-    </label>
+    <div class="row">
+      <label><span>Weeks ahead</span>
+        <select id="rb-weeks">
+          <option value="1">1 week</option>
+          <option value="2">2 weeks</option>
+          <option value="3">3 weeks</option>
+          <option value="4" selected>4 weeks</option>
+          <option value="5">5 weeks</option>
+          <option value="6">6 weeks</option>
+          <option value="8">8 weeks</option>
+        </select>
+      </label>
+      <label><span>Day</span>
+        <select id="rb-day">
+          <option value="1">Monday</option>
+          <option value="2">Tuesday</option>
+          <option value="3">Wednesday</option>
+          <option value="4">Thursday</option>
+          <option value="5">Friday</option>
+        </select>
+      </label>
+    </div>
+    <div class="row">
+      <label><span>Time</span>
+        <select id="rb-time"></select>
+      </label>
+      <label><span>Duration</span>
+        <select id="rb-duration">
+          <option value="20">20 min</option>
+          <option value="30" selected>30 min</option>
+          <option value="45">45 min</option>
+          <option value="60">1 hour</option>
+          <option value="90">1 hr 30 min</option>
+        </select>
+      </label>
+    </div>
+    <div class="preview" id="preview"></div>
     <div class="attendees" id="attendee-display"></div>
     <div class="actions">
       <button class="btn-cancel" onclick="window.close()">Cancel</button>
@@ -80,350 +104,392 @@
 </div>
 
 <script>
+// ───────────────────────── Config ─────────────────────────
 const CLIENT_ID = '669523312108-ghhj12obk8qtvggc4hsfpau6fmr55q6n.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/calendar';
-const STORAGE_KEY = 'rebook_token';
-const BOOKABLE_START = { h: 9, m: 0 };
+const TOKEN_KEY = 'rebook_token';
+const EMAIL_KEY = 'rebook_email';
+const API = 'https://www.googleapis.com/calendar/v3';
+const COLOR_ID = '5';                    // Banana — "Member Call" category
+const BOOKABLE_START = { h: 9, m: 0 };   // suggestion window
 const BOOKABLE_END = { h: 15, m: 30 };
-const COLOR_ID = '5'; // Banana — matches "Member Call" category
+const SLOT_STEP_MIN = 30;
+const SUGGEST_MAX_DAYS = 2;              // days of suggestions shown
+const SUGGEST_SEARCH_DAYS = 5;           // weekdays searched (target day included)
+const SUGGEST_PER_DAY = 6;               // slots per day, nearest to requested time
+
+let PARAMS = null;
+let ORIGIN = null;          // original call date (midnight)
 let accessToken = null;
-let pendingEvent = null;
+let tokenClient = null;
+let afterAuth = null;
+let selfEmail = null;
+
+// ───────────────────────── Helpers ─────────────────────────
+const $ = function(id) { return document.getElementById(id); };
+function setStatus(msg) { $('status').textContent = msg; }
+function setBusy(b) { $('btn-book').disabled = b; }
+function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function startOfDay(d) { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
+function atTime(d, t) { const x = new Date(d); x.setHours(t.h, t.m, 0, 0); return x; }
+function isWeekday(d) { const w = d.getDay(); return w >= 1 && w <= 5; }
+function fmtDate(d) { return d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }); }
+function fmtTime(d) { return d.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true }); }
+
+function intParam(p, name, fallback) {
+  const v = parseInt(p.get(name), 10);
+  return isNaN(v) ? fallback : v;   // 0 is valid (January, midnight)
+}
 
 function getParams() {
   const p = new URLSearchParams(window.location.search);
   const now = new Date();
   return {
     title: p.get('title') || '',
-    hours: parseInt(p.get('hours')) || 9,
-    minutes: parseInt(p.get('minutes')) || 0,
-    attendees: p.get('attendees') ? p.get('attendees').split(',').filter(Boolean) : [],
-    year: parseInt(p.get('year')) || now.getFullYear(),
-    month: parseInt(p.get('month')) || now.getMonth(),
-    day: parseInt(p.get('day')) || now.getDate()
+    hours: intParam(p, 'hours', 9),
+    minutes: intParam(p, 'minutes', 0),
+    attendees: (p.get('attendees') || '').split(',').map(function(s) { return s.trim(); }).filter(Boolean),
+    year: intParam(p, 'year', now.getFullYear()),
+    month: intParam(p, 'month', now.getMonth()),
+    day: intParam(p, 'day', now.getDate()),
+    dateOk: p.get('dateok') !== '0'   // older bookmarklet doesn't send this
   };
 }
 
+// ───────────────────────── Form ─────────────────────────
 function buildTimeOptions(defaultHours, defaultMinutes) {
-  const sel = document.getElementById('rb-time');
-  let bestMatch = null;
-  let bestDiff = Infinity;
+  const sel = $('rb-time');
+  let bestMatch = null, bestDiff = Infinity;
   const opts = [];
   for (let h = 7; h <= 19; h++) {
-    for (let m of [0, 30]) {
+    for (const m of [0, 30]) {
       const diff = Math.abs((h * 60 + m) - (defaultHours * 60 + defaultMinutes));
       if (diff < bestDiff) { bestDiff = diff; bestMatch = h + ':' + m; }
-      const label = (h % 12 || 12) + ':' + (m === 0 ? '00' : '30') + ' ' + (h < 12 ? 'AM' : 'PM');
       const opt = document.createElement('option');
       opt.value = h + ':' + m;
-      opt.textContent = label;
+      opt.textContent = (h % 12 || 12) + ':' + (m === 0 ? '00' : '30') + ' ' + (h < 12 ? 'AM' : 'PM');
       opts.push(opt);
     }
   }
-  opts.forEach(function(opt) {
-    if (opt.value === bestMatch) opt.selected = true;
-    sel.appendChild(opt);
-  });
+  opts.forEach(function(opt) { if (opt.value === bestMatch) opt.selected = true; sel.appendChild(opt); });
 }
 
-function init() {
-  const params = getParams();
-  document.getElementById('rb-title').value = params.title;
-  buildTimeOptions(params.hours, params.minutes);
-  if (params.attendees.length > 0) {
-    document.getElementById('attendee-display').textContent = '👤 ' + params.attendees.join(', ');
+// Target = original call date + N weeks, moved to the chosen weekday within that Mon–Fri week.
+function computeTarget() {
+  const weeks = parseInt($('rb-weeks').value, 10);
+  const dow = parseInt($('rb-day').value, 10);                 // 1=Mon … 5=Fri
+  const tp = $('rb-time').value.split(':');
+  const duration = parseInt($('rb-duration').value, 10);
+  const target = addDays(ORIGIN, weeks * 7);
+  const curIdx = (target.getDay() + 6) % 7;                     // Mon=0 … Sun=6
+  const wantIdx = (dow + 6) % 7;
+  target.setDate(target.getDate() + (wantIdx - curIdx));
+  target.setHours(parseInt(tp[0], 10), parseInt(tp[1], 10), 0, 0);
+  const end = new Date(target.getTime() + duration * 60000);
+  return { target: target, end: end, duration: duration };
+}
+
+function updatePreview() {
+  const t = computeTarget();
+  const el = $('preview');
+  if (t.target < new Date()) {
+    el.className = 'preview warn';
+    el.textContent = '⚠️ ' + fmtDate(t.target) + ' is in the past — check weeks/day.';
+  } else {
+    el.className = 'preview';
+    el.textContent = '→ ' + fmtDate(t.target) + ' · ' + fmtTime(t.target) + ' – ' + fmtTime(t.end);
   }
-  const cached = localStorage.getItem(STORAGE_KEY);
-  if (cached) {
-    try {
-      const parsed = JSON.parse(cached);
-      if (parsed.expiry > Date.now()) {
-        accessToken = parsed.token;
-        document.getElementById('auth-badge').textContent = '🔒 Authorised';
-        return;
-      }
-    } catch(e) {}
-  }
-  authenticate();
 }
 
-// FIX A (Part 1): Fetch the calendar owner's email so we can mark self as accepted
-function getCalendarEmail(callback) {
-  fetch('https://www.googleapis.com/calendar/v3/calendars/primary', {
-    headers: { 'Authorization': 'Bearer ' + accessToken }
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) { callback(data.id); })
-  .catch(function() { callback(null); });
+// ───────────────────────── Auth ─────────────────────────
+function loadToken() {
+  try {
+    const c = JSON.parse(localStorage.getItem(TOKEN_KEY) || 'null');
+    if (c && c.expiry > Date.now() + 60000) { accessToken = c.token; return true; }
+  } catch (e) {}
+  accessToken = null;
+  return false;
 }
+function clearToken() { localStorage.removeItem(TOKEN_KEY); accessToken = null; $('auth-badge').textContent = ''; }
 
-// FIX A (Part 2): Build the event object with self-acceptance and colorId
-function buildEvent(title, target, end, attendees, selfEmail) {
-  const attendeeList = attendees.map(function(e) { return { email: e }; });
-  if (selfEmail) {
-    attendeeList.push({ email: selfEmail, self: true, responseStatus: 'accepted' });
-  }
-  return {
-    summary: title,
-    start: { dateTime: target.toISOString() },
-    end: { dateTime: end.toISOString() },
-    attendees: attendeeList,
-    colorId: COLOR_ID,
-    conferenceData: { createRequest: { requestId: Math.random().toString(36).substr(2, 9) } }
-  };
-}
-
-function authenticate() {
-  setStatus('Authorising...');
-  google.accounts.oauth2.initTokenClient({
-    client_id: CLIENT_ID,
-    scope: SCOPES,
-    callback: function(resp) {
-      if (resp.error) { setStatus('Auth error: ' + resp.error); return; }
-      accessToken = resp.access_token;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        token: accessToken,
-        expiry: Date.now() + (55 * 60 * 1000)
-      }));
-      document.getElementById('auth-badge').textContent = '🔒 Authorised';
-      setStatus('');
-      if (pendingEvent) {
-        if (pendingEvent._needsEmail) {
-          // FIX B + FIX A: After auth, resolve email then run full check (not direct submit)
-          const { title, target, end, duration, params } = pendingEvent;
-          getCalendarEmail(function(selfEmail) {
-            const event = buildEvent(title, target, end, params.attendees, selfEmail);
-            pendingEvent = event;
-            checkAndBook(event, target, end, duration);
-          });
-        } else {
-          // FIX B: Route through checkAndBook, not submitEvent
-          const { target, end, duration } = getTargetDate();
-          checkAndBook(pendingEvent, target, end, duration);
-        }
-      }
-    }
-  }).requestAccessToken();
-}
-
-function getTargetDate() {
-  const params = getParams();
-  const weeks = parseInt(document.getElementById('rb-weeks').value);
-  const timeParts = document.getElementById('rb-time').value.split(':');
-  const hours = parseInt(timeParts[0]);
-  const mins = parseInt(timeParts[1]);
-  const duration = parseInt(document.getElementById('rb-duration').value);
-  const base = new Date(params.year, params.month, params.day);
-  base.setDate(base.getDate() + (weeks * 7));
-  base.setHours(hours, mins, 0, 0);
-  const end = new Date(base.getTime() + duration * 60 * 1000);
-  return { target: base, end, duration };
-}
-
-// FIX A (Part 3) + FIX B: handleBook now fetches email before building event,
-// and stores _needsEmail placeholder if auth is required
-function handleBook() {
-  const title = document.getElementById('rb-title').value.trim();
-  if (!title) { setStatus('Please enter a title.'); return; }
-  const { target, end, duration } = getTargetDate();
-  const params = getParams();
-
-  document.getElementById('btn-book').disabled = true;
-  document.getElementById('conflict-box').style.display = 'none';
-  setStatus('Checking availability...');
-
-  if (!accessToken) {
-    // Store enough to rebuild the event after auth, flagged for email resolution
-    pendingEvent = { _needsEmail: true, title, target, end, duration, params };
-    authenticate();
-    return;
-  }
-
-  getCalendarEmail(function(selfEmail) {
-    const event = buildEvent(title, target, end, params.attendees, selfEmail);
-    pendingEvent = event;
-    checkAndBook(event, target, end, duration);
-  });
-}
-
-function checkAndBook(event, target, end, duration) {
-  const headers = { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' };
-  fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin='
-    + target.toISOString() + '&timeMax=' + end.toISOString() + '&singleEvents=true', { headers: headers })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    if (data.error && data.error.code === 401) {
-      localStorage.removeItem(STORAGE_KEY);
-      accessToken = null;
-      authenticate();
-      return;
-    }
-    const conflicts = (data.items || []).filter(function(e) { return e.status !== 'cancelled'; });
-    if (conflicts.length > 0) {
-      const names = conflicts.map(function(e) { return e.summary; }).join(', ');
-      showConflict(names, target, duration, event);
-      return;
-    }
-    submitEvent(event);
-  })
-  .catch(function(e) {
-    setStatus('Error: ' + e.message);
-    document.getElementById('btn-book').disabled = false;
-  });
-}
-
-function showConflict(conflictNames, targetDate, duration, originalEvent) {
-  setStatus('');
-  document.getElementById('conflict-msg').textContent = '⚠️ "' + conflictNames + '" is already booked at this time.';
-  document.getElementById('suggestions').innerHTML = '';
-  document.getElementById('no-slots').style.display = 'none';
-  document.getElementById('conflict-box').style.display = 'block';
-  document.getElementById('btn-book').disabled = false;
-  findFreeSlots(targetDate, duration, originalEvent);
-}
-
-function findFreeSlots(targetDate, duration, originalEvent) {
-  const headers = { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' };
-  const day1 = new Date(targetDate);
-  day1.setHours(0, 0, 0, 0);
-  const day2 = new Date(day1);
-  day2.setDate(day2.getDate() + 1);
-  const searchEnd = new Date(day2);
-  searchEnd.setHours(23, 59, 59, 0);
-
-  fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
-    method: 'POST',
-    headers: headers,
-    body: JSON.stringify({
-      timeMin: day1.toISOString(),
-      timeMax: searchEnd.toISOString(),
-      items: [{ id: 'primary' }]
-    })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    if (data.error) { setStatus('Could not fetch availability.'); return; }
-    const busy = (data.calendars.primary.busy || []).map(function(b) {
-      return { start: new Date(b.start), end: new Date(b.end) };
+function getTokenClient() {
+  if (!tokenClient) {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      callback: onToken,
+      error_callback: onAuthError
     });
-    const slots = getFreeSlots(busy, day1, day2, duration, targetDate);
-    renderSuggestions(slots, duration, originalEvent);
-  })
-  .catch(function(e) { setStatus('Error fetching availability: ' + e.message); });
-}
-
-function getFreeSlots(busyPeriods, day1, day2, duration, originalTarget) {
-  const slots = [];
-  const days = [day1, day2];
-  const targetDateStr = originalTarget.toDateString();
-
-  for (let d = 0; d < days.length; d++) {
-    if (slots.length >= 5) break;
-    const daySlots = [];
-    const day = days[d];
-    let slotStart = new Date(day);
-    slotStart.setHours(BOOKABLE_START.h, BOOKABLE_START.m, 0, 0);
-    const dayEnd = new Date(day);
-    dayEnd.setHours(BOOKABLE_END.h, BOOKABLE_END.m, 0, 0);
-
-    while (slotStart < dayEnd && daySlots.length < 8) {
-      const slotEnd = new Date(slotStart.getTime() + duration * 60 * 1000);
-      if (slotEnd > dayEnd) break;
-
-      if (slotStart.toDateString() === targetDateStr &&
-          slotStart.getHours() === originalTarget.getHours() &&
-          slotStart.getMinutes() === originalTarget.getMinutes()) {
-        slotStart = new Date(slotStart.getTime() + 30 * 60 * 1000);
-        continue;
-      }
-
-      const isBusy = busyPeriods.some(function(b) {
-        return slotStart < b.end && slotEnd > b.start;
-      });
-
-      if (!isBusy) daySlots.push(new Date(slotStart));
-      slotStart = new Date(slotStart.getTime() + 30 * 60 * 1000);
-    }
-
-    if (daySlots.length > 0) {
-      slots.push({ day: new Date(day), times: daySlots.slice(0, 5) });
-    }
-    if (slots.length > 0 && d === 0) break;
   }
-  return slots;
+  return tokenClient;
 }
 
-function renderSuggestions(slotGroups, duration, originalEvent) {
-  const container = document.getElementById('suggestions');
-  container.innerHTML = '';
+// prompt:'' + login_hint = after first consent, Google re-issues the token without the
+// account chooser (popup flashes and closes) as long as you're still signed in to Google.
+function withAuth(fn) {
+  if (loadToken()) { $('auth-badge').textContent = '🔒 Authorised'; fn(); return; }
+  afterAuth = fn;
+  setStatus('Signing in…');
+  const cfg = { prompt: '' };
+  const hint = localStorage.getItem(EMAIL_KEY);
+  if (hint) cfg.login_hint = hint;
+  getTokenClient().requestAccessToken(cfg);
+}
 
-  if (slotGroups.length === 0) {
-    document.getElementById('no-slots').style.display = 'block';
+function onToken(resp) {
+  if (resp.error) { setStatus('Sign-in error: ' + resp.error); setBusy(false); return; }
+  accessToken = resp.access_token;
+  const life = (parseInt(resp.expires_in, 10) || 3600) * 1000;
+  localStorage.setItem(TOKEN_KEY, JSON.stringify({ token: accessToken, expiry: Date.now() + life - 5 * 60000 }));
+  $('auth-badge').textContent = '🔒 Authorised';
+  setStatus('');
+  const fn = afterAuth; afterAuth = null;
+  if (fn) fn();
+}
+
+function onAuthError(err) {
+  afterAuth = null;
+  setBusy(false);
+  if (err && err.type === 'popup_failed_to_open') setStatus('Sign-in popup was blocked — click Book to sign in.');
+  else if (err && err.type === 'popup_closed') setStatus('Sign-in cancelled.');
+  else setStatus('Sign-in failed — click Book to try again.');
+}
+
+// ───────────────────────── Calendar API ─────────────────────────
+function api(path, opts) {
+  opts = opts || {};
+  return fetch(API + path, {
+    method: opts.method || 'GET',
+    headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  }).then(function(r) {
+    return r.json().catch(function() { return {}; }).then(function(data) {
+      if (r.status === 401 || (data.error && data.error.code === 401)) {
+        clearToken();
+        const e = new Error('Session expired'); e.auth = true; throw e;
+      }
+      if (data.error) throw new Error(data.error.message || 'Calendar API error');
+      return data;
+    });
+  });
+}
+
+function ensureSelfEmail() {
+  if (selfEmail) return Promise.resolve(selfEmail);
+  return api('/calendars/primary').then(function(d) {
+    selfEmail = d.id || null;
+    if (selfEmail) localStorage.setItem(EMAIL_KEY, selfEmail);
+    return selfEmail;
+  });
+}
+
+// Same rules Google's free/busy uses: ignore cancelled, "Free" (transparent),
+// working-location and declined events. Opaque all-day events (e.g. leave) DO block.
+function isBlocking(e) {
+  if (e.status === 'cancelled') return false;
+  if (e.transparency === 'transparent') return false;
+  if (e.eventType === 'workingLocation') return false;
+  const me = (e.attendees || []).find(function(a) { return a.self; });
+  if (me && me.responseStatus === 'declined') return false;
+  return true;
+}
+function parseWhen(w) {
+  if (w.dateTime) return new Date(w.dateTime);
+  const p = w.date.split('-');
+  return new Date(+p[0], +p[1] - 1, +p[2]);
+}
+function fetchBusy(timeMin, timeMax) {
+  const q = new URLSearchParams({
+    timeMin: timeMin.toISOString(), timeMax: timeMax.toISOString(),
+    singleEvents: 'true', orderBy: 'startTime', maxResults: '250'
+  });
+  return api('/calendars/primary/events?' + q.toString()).then(function(d) {
+    return (d.items || []).filter(isBlocking).map(function(e) {
+      return { start: parseWhen(e.start), end: parseWhen(e.end), summary: e.summary || '(busy)' };
+    });
+  });
+}
+function overlaps(busy, s, e) { return busy.filter(function(b) { return s < b.end && e > b.start; }); }
+
+// ───────────────────────── Booking flow ─────────────────────────
+function handleBook() {
+  if (!$('rb-title').value.trim()) { setStatus('Please enter a title.'); return; }
+  const t = computeTarget();
+  if (t.target < new Date()) { setStatus('That time is in the past.'); return; }
+  setBusy(true);
+  $('conflict-box').style.display = 'none';
+  setStatus('Checking availability…');
+  withAuth(function() { runBooking(false); });
+}
+
+function runBooking(retried) {
+  const t = computeTarget();
+  const winStart = startOfDay(t.target);
+  const winEnd = addDays(winStart, 14);   // covers target day + 5 weekdays for suggestions
+  ensureSelfEmail()
+    .then(function() { return fetchBusy(winStart, winEnd); })
+    .then(function(busy) {
+      const clashes = overlaps(busy, t.target, t.end);
+      if (clashes.length === 0) return submitEvent(t.target, t.end);
+      showConflict(clashes, busy, t);
+    })
+    .catch(function(e) { handleError(e, function() { runBooking(true); }, retried); });
+}
+
+function handleError(e, retry, retried) {
+  if (e.auth && !retried) { setStatus('Session expired — signing in again…'); withAuth(retry); return; }
+  setStatus('Error: ' + e.message);
+  setBusy(false);
+}
+
+function showConflict(clashes, busy, t) {
+  setStatus('');
+  const names = clashes.map(function(c) { return c.summary; }).join(', ');
+  $('conflict-msg').textContent = '⚠️ "' + names + '" is already booked at this time.';
+  $('conflict-box').style.display = 'block';
+  setBusy(false);
+  renderSuggestions(getFreeSlots(busy, t.target, t.duration), t.duration);
+}
+
+// Weekdays only, starting on the target day. Per day, picks the slots closest to the
+// requested time, then shows them in time order.
+function getFreeSlots(busy, target, duration) {
+  const groups = [];
+  const now = new Date();
+  const wantMins = target.getHours() * 60 + target.getMinutes();
+  let day = startOfDay(target);
+  let checked = 0;
+  while (checked < SUGGEST_SEARCH_DAYS && groups.length < SUGGEST_MAX_DAYS) {
+    if (isWeekday(day)) {
+      checked++;
+      const free = [];
+      let s = atTime(day, BOOKABLE_START);
+      const dayEnd = atTime(day, BOOKABLE_END);
+      while (true) {
+        const e = new Date(s.getTime() + duration * 60000);
+        if (e > dayEnd) break;
+        if (s > now && overlaps(busy, s, e).length === 0) free.push(new Date(s));
+        s = new Date(s.getTime() + SLOT_STEP_MIN * 60000);
+      }
+      if (free.length) {
+        const dist = function(d) { return Math.abs(d.getHours() * 60 + d.getMinutes() - wantMins); };
+        const picked = free.slice().sort(function(a, b) { return dist(a) - dist(b); })
+          .slice(0, SUGGEST_PER_DAY).sort(function(a, b) { return a - b; });
+        groups.push({ day: new Date(day), times: picked });
+      }
+    }
+    day = addDays(day, 1);
+  }
+  return groups;
+}
+
+function renderSuggestions(groups, duration) {
+  const container = $('suggestions');
+  container.innerHTML = '';
+  const noSlots = $('no-slots');
+  if (groups.length === 0) {
+    noSlots.textContent = 'No free weekday slots in the next ' + SUGGEST_SEARCH_DAYS + ' weekdays between '
+      + fmtTime(atTime(new Date(), BOOKABLE_START)) + ' and ' + fmtTime(atTime(new Date(), BOOKABLE_END)) + '.';
+    noSlots.style.display = 'block';
     return;
   }
-
-  const params = getParams();
-
-  slotGroups.forEach(function(group) {
-    const dayLabel = document.createElement('div');
-    dayLabel.className = 'day-label';
-    const isToday = group.day.toDateString() === new Date().toDateString();
-    dayLabel.textContent = isToday ? 'Today' : group.day.toLocaleDateString('en-AU', { weekday: 'long', month: 'short', day: 'numeric' });
-    container.appendChild(dayLabel);
-
+  noSlots.style.display = 'none';
+  groups.forEach(function(group) {
+    const label = document.createElement('div');
+    label.className = 'day-label';
+    label.textContent = group.day.toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'short' });
+    container.appendChild(label);
     const row = document.createElement('div');
     row.className = 'suggestions';
     container.appendChild(row);
-
     group.times.forEach(function(slot) {
       const btn = document.createElement('button');
       btn.className = 'suggestion-btn';
-      btn.textContent = slot.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true });
+      btn.textContent = fmtTime(slot);
       btn.onclick = function() {
-        document.querySelectorAll('.suggestion-btn').forEach(function(b) { b.classList.remove('selected'); });
+        document.querySelectorAll('.suggestion-btn').forEach(function(b) { b.classList.remove('selected'); b.disabled = true; });
         btn.classList.add('selected');
-        const slotEnd = new Date(slot.getTime() + duration * 60 * 1000);
-        // FIX A: Use buildEvent for suggestion bookings too (self-accept + colorId)
-        getCalendarEmail(function(selfEmail) {
-          const newEvent = buildEvent(originalEvent.summary, slot, slotEnd, params.attendees, selfEmail);
-          setStatus('');
-          submitEvent(newEvent);
-        });
+        submitEvent(slot, new Date(slot.getTime() + duration * 60000));
       };
       row.appendChild(btn);
     });
   });
 }
 
-function submitEvent(event) {
-  const headers = { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' };
-  setStatus('Creating event...');
-  document.getElementById('btn-book').disabled = true;
-  fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1', {
-    method: 'POST', headers: headers, body: JSON.stringify(event)
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(ev) {
-    if (ev.error) {
-      setStatus('Error: ' + ev.error.message);
-      document.getElementById('btn-book').disabled = false;
-      return;
-    }
-    document.getElementById('form-area').innerHTML =
-      '<div class="success">' +
-      '✅ Booked!<br><br>' +
-      '<strong>' + ev.summary + '</strong><br><br>' +
-      (ev.hangoutLink ? '🎥 <a href="' + ev.hangoutLink + '" target="_blank">Meet link</a><br><br>' : '') +
-      '<small>' + new Date(ev.start.dateTime).toLocaleString('en-AU') + '</small>' +
-      '</div>';
-    document.getElementById('conflict-box').style.display = 'none';
-  })
-  .catch(function(e) {
-    setStatus('Error: ' + e.message);
-    document.getElementById('btn-book').disabled = false;
-  });
+function submitEvent(start, end, retried) {
+  const title = $('rb-title').value.trim();
+  const me = (selfEmail || '').toLowerCase();
+  const guests = PARAMS.attendees.filter(function(e) { return e.toLowerCase() !== me; });
+  const attendees = guests.map(function(e) { return { email: e }; });
+  if (selfEmail) attendees.push({ email: selfEmail, responseStatus: 'accepted' });
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const event = {
+    summary: title,
+    start: { dateTime: start.toISOString(), timeZone: tz },
+    end: { dateTime: end.toISOString(), timeZone: tz },
+    attendees: attendees,
+    colorId: COLOR_ID,
+    conferenceData: { createRequest: {
+      requestId: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random(),
+      conferenceSolutionKey: { type: 'hangoutsMeet' }
+    } }
+  };
+  setStatus('Creating event…');
+  setBusy(true);
+  // sendUpdates=all → Google emails the invite to every guest
+  api('/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all', { method: 'POST', body: event })
+    .then(function(ev) { showSuccess(ev, guests); })
+    .catch(function(e) {
+      document.querySelectorAll('.suggestion-btn').forEach(function(b) { b.disabled = false; });
+      handleError(e, function() { submitEvent(start, end, true); }, retried);
+    });
 }
 
-function setStatus(msg) { document.getElementById('status').textContent = msg; }
+function showSuccess(ev, guests) {
+  const area = $('form-area');
+  area.innerHTML = '';
+  const box = document.createElement('div');
+  box.className = 'success';
+  const add = function(tag, text, cls) { const n = document.createElement(tag); n.textContent = text; if (cls) n.className = cls; box.appendChild(n); return n; };
+  add('div', '✅ Booked!');
+  add('strong', ev.summary || '');
+  const s = new Date(ev.start.dateTime), e = new Date(ev.end.dateTime);
+  add('div', fmtDate(s) + ' · ' + fmtTime(s) + ' – ' + fmtTime(e), 'meta');
+  if (ev.hangoutLink) {
+    const d = document.createElement('div');
+    const a = document.createElement('a');
+    a.href = ev.hangoutLink; a.target = '_blank'; a.textContent = '🎥 Meet link';
+    d.appendChild(a); box.appendChild(d);
+  }
+  add('div', guests.length ? '✉️ Invite emailed to ' + guests.join(', ') : 'No guests on this call — no invite sent.', 'meta');
+  area.appendChild(box);
+  $('conflict-box').style.display = 'none';
+  setStatus('');
+}
+
+// ───────────────────────── Init ─────────────────────────
+function init() {
+  PARAMS = getParams();
+  ORIGIN = new Date(PARAMS.year, PARAMS.month, PARAMS.day);
+  $('rb-title').value = PARAMS.title;
+  buildTimeOptions(PARAMS.hours, PARAMS.minutes);
+  const od = ORIGIN.getDay();
+  $('rb-day').value = String(od >= 1 && od <= 5 ? od : 1);
+
+  const src = $('source-line');
+  if (PARAMS.dateOk) {
+    src.textContent = 'Original call: ' + fmtDate(ORIGIN);
+  } else {
+    src.className = 'source warn';
+    src.textContent = '⚠️ Couldn\'t read the call date — counting from today (' + fmtDate(ORIGIN) + ').';
+  }
+  if (PARAMS.attendees.length) $('attendee-display').textContent = '👤 ' + PARAMS.attendees.join(', ');
+
+  ['rb-weeks', 'rb-day', 'rb-time', 'rb-duration'].forEach(function(id) { $(id).addEventListener('change', updatePreview); });
+  updatePreview();
+
+  withAuth(function() { setStatus(''); });
+}
 
 window.onload = init;
 </script>
